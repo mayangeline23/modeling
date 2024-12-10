@@ -72,7 +72,6 @@ uploaded_file = st.sidebar.file_uploader("Your upload your CSV file", type="csv"
 if dataset_choice != "Select":
     # Remove the title if dataset is selected
     st.empty()
-    st.subheader(f"You selected: {dataset_choice}")
     
     # Dataset descriptions
     dataset_info = {
