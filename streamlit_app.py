@@ -92,17 +92,14 @@ dataset_info = {
     }
 }
 
-
 # Create a sidebar for dataset selection
 dataset_choice = st.sidebar.selectbox(
+    "Dataset",
     ["Dataset", "Heart Disease", "Diabetes", "Breast Cancer", "Liver Disorders"]
 )
 
-# File upload option (separate from the dataset selection)
-uploaded_file = st.sidebar.file_uploader("Upload your CSV file", type="csv")
-
-# Render only after a dataset or file is selected
-if dataset_choice != "Select":
+# Render only after a dataset is selected
+if dataset_choice != "Dataset":
     st.subheader(f"You selected: {dataset_choice}")
     
     # Display dataset information
@@ -135,24 +132,7 @@ if dataset_choice != "Select":
     st.write(f"Shape: {data.shape}")
     st.write(data.head())
 
-elif uploaded_file is not None:
-    # Handle uploaded file
-    data = pd.read_csv(uploaded_file)
-    st.subheader("Uploaded Dataset")
-    st.write(data.head())  # Preview of uploaded data
-    X = data.iloc[:, :-1]  # All columns except the last one
-    y = data.iloc[:, -1]   # Last column as the target
-    
-    # Dataset Overview
-    st.subheader("Dataset Overview")
-    st.write(f"Shape: {data.shape}")
-    st.write(data.head())
-
-else:
-    st.write("Please select a dataset from the sidebar to begin.")
-
-# Model Selection and Evaluation
-if 'data' in locals():
+    # Model Selection and Evaluation
     model_choice = st.sidebar.selectbox(
         "Choose a model:",
         ["RandomForest", "LogisticRegression", "GradientBoosting"]
@@ -184,3 +164,5 @@ if 'data' in locals():
         plt.figure(figsize=(10, 6))
         sns.heatmap(data.corr(), annot=True, cmap="coolwarm", fmt=".2f")
         st.pyplot()
+else:
+    st.write("Please select a dataset from the sidebar to begin.")
