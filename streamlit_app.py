@@ -88,7 +88,7 @@ if dataset_choice != "Select":
         },
         "Diabetes": {
             "description": "The diabetes dataset from sklearn consists of 442 records with 10 attributes. It is used for regression but has been modified here for classification by binarizing the target variable.",
-            "source": "https://scikit-learn.org/stable/modules/generated/sklearn.datasets.load_diabetes.html",
+            "source": "https://archive.ics.uci.edu/dataset/34/diabetes",
             "attributes": list(load_diabetes_data().columns)
         },
         "Breast Cancer": {
