@@ -60,33 +60,59 @@ def train_and_evaluate_model(X, y, model_type="RandomForest"):
     return accuracy_score(y_test, y_pred), pd.DataFrame(report).transpose()
 
 # Streamlit App
-st.set_page_config(page_title="Disease Prediction Dashboard", layout="wide")
 st.title("UCI Disease Prediction Dashboard")
 
-# Sidebar with multi-step interaction
-sidebar = st.sidebar
-sidebar.header("Step-by-Step Process")
+# Dataset descriptions
+dataset_info = {
+    "Heart Disease": {
+        "description": "This dataset contains 303 records and 14 attributes related to diagnosing heart disease. The target variable indicates the presence of heart disease (1: disease, 0: no disease).",
+        "source": "https://archive.ics.uci.edu/ml/datasets/Heart+Disease",
+        "attributes": [
+            "age", "sex", "cp (chest pain type)", "trestbps (resting blood pressure)",
+            "chol (serum cholesterol)", "fbs (fasting blood sugar)", "restecg (resting ECG)",
+            "thalach (max heart rate achieved)", "exang (exercise-induced angina)",
+            "oldpeak (ST depression)", "slope (slope of peak exercise ST segment)",
+            "ca (number of vessels colored by fluoroscopy)", "thal (thalassemia)", "target"
+        ]
+    },
+    "Diabetes": {
+        "description": "The diabetes dataset from sklearn consists of 442 records with 10 attributes. It is used for regression but has been modified here for classification by binarizing the target variable.",
+        "source": "https://scikit-learn.org/stable/modules/generated/sklearn.datasets.load_diabetes.html",
+        "attributes": list(load_diabetes_data().columns)
+    },
+    "Breast Cancer": {
+        "description": "This dataset contains 569 records and 30 attributes related to diagnosing breast cancer. The target variable indicates whether the cancer is malignant or benign.",
+        "source": "https://scikit-learn.org/stable/modules/generated/sklearn.datasets.load_breast_cancer.html",
+        "attributes": list(load_breast_cancer_data().columns)
+    },
+    "Liver Disorders": {
+        "description": "The liver disorders dataset contains 345 records and 7 attributes related to the diagnosis of liver disorders.",
+        "source": "https://archive.ics.uci.edu/ml/datasets/Liver+Disorders",
+        "attributes": ["mcv", "alkphos", "sgpt", "sgot", "gammagt", "drinks", "selector"]
+    }
+}
 
-# Step 1: Select Dataset or Upload File
-dataset_choice = sidebar.selectbox(
-    "Select a Dataset or Upload File",
-    ["Select", "Heart Disease", "Diabetes", "Breast Cancer", "Liver Disorders", "Upload File"]
+# Create a sidebar for dataset selection
+dataset_choice = st.sidebar.selectbox(
+    "Choose a dataset to explore:",
+    ["Select", "Heart Disease", "Diabetes", "Breast Cancer", "Liver Disorders"]
 )
 
-# Step 2: Handle File Upload
-if dataset_choice == "Upload File":
-    uploaded_file = sidebar.file_uploader("Upload your CSV file", type="csv")
-    if uploaded_file is not None:
-        data = pd.read_csv(uploaded_file)
-        st.subheader("Uploaded Dataset")
-        st.write(data.head())  # Preview of uploaded data
-        X = data.iloc[:, :-1]  # All columns except the last one
-        y = data.iloc[:, -1]   # Last column as the target
-    else:
-        data = None
+# File upload option (separate from the dataset selection)
+uploaded_file = st.sidebar.file_uploader("Upload your CSV file", type="csv")
 
-# Step 3: Select Dataset
-elif dataset_choice != "Select":
+# Render only after a dataset or file is selected
+if dataset_choice != "Select":
+    st.subheader(f"You selected: {dataset_choice}")
+    
+    # Display dataset information
+    st.markdown("### Dataset Information")
+    st.write(dataset_info[dataset_choice]["description"])
+    st.markdown(f"**Source:** [Dataset Link]({dataset_info[dataset_choice]['source']})")
+    st.markdown("**Attributes:**")
+    st.write(dataset_info[dataset_choice]["attributes"])
+
+    # Load the appropriate dataset
     if dataset_choice == "Heart Disease":
         data = load_heart_disease_data()
         X = data.drop("target", axis=1)
@@ -104,17 +130,35 @@ elif dataset_choice != "Select":
         X = data.drop("selector", axis=1)
         y = data["selector"]
 
-    st.subheader(f"Dataset Overview: {dataset_choice}")
-    st.write(data.head())  # Preview of the selected dataset
+    # Dataset Overview
+    st.subheader("Dataset Overview")
+    st.write(f"Shape: {data.shape}")
+    st.write(data.head())
 
-# Step 4: Model Selection and Training
-if data is not None:
-    model_choice = sidebar.selectbox(
+elif uploaded_file is not None:
+    # Handle uploaded file
+    data = pd.read_csv(uploaded_file)
+    st.subheader("Uploaded Dataset")
+    st.write(data.head())  # Preview of uploaded data
+    X = data.iloc[:, :-1]  # All columns except the last one
+    y = data.iloc[:, -1]   # Last column as the target
+    
+    # Dataset Overview
+    st.subheader("Dataset Overview")
+    st.write(f"Shape: {data.shape}")
+    st.write(data.head())
+
+else:
+    st.write("Please select a dataset from the sidebar to begin.")
+
+# Model Selection and Evaluation
+if 'data' in locals():
+    model_choice = st.sidebar.selectbox(
         "Choose a model:",
         ["RandomForest", "LogisticRegression", "GradientBoosting"]
     )
-    
-    if sidebar.button("Train and Evaluate Model"):
+
+    if st.button("Train and Evaluate Model"):
         st.subheader("Model Performance")
         accuracy, report_df = train_and_evaluate_model(X, y, model_type=model_choice)
         st.write(f"Accuracy: {accuracy:.2f}")
@@ -129,19 +173,14 @@ if data is not None:
             st.subheader("Feature Importance")
             st.bar_chart(feature_importances)
 
-# Optional Visualizations
-if 'data' in locals():
-    sidebar.markdown("### Visualizations")
-    if sidebar.checkbox("Show Pairplot"):
+    # Visualization Options
+    if st.sidebar.checkbox("Show Pairplot"):
         st.subheader("Pairplot")
         sns.pairplot(data)
         st.pyplot()
 
-    if sidebar.checkbox("Show Correlation Heatmap"):
+    if st.sidebar.checkbox("Show Correlation Heatmap"):
         st.subheader("Correlation Heatmap")
         plt.figure(figsize=(10, 6))
         sns.heatmap(data.corr(), annot=True, cmap="coolwarm", fmt=".2f")
         st.pyplot()
-
-else:
-    st.write("Please select or upload a dataset to begin.")
