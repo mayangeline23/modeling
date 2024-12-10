@@ -65,98 +65,51 @@ dataset_choice = st.sidebar.selectbox(
     ["Select", "Heart Disease", "Diabetes", "Breast Cancer", "Liver Disorders"]
 )
 
-# File upload section (separate from the dataset select box)
-uploaded_file = st.sidebar.file_uploader("Upload your CSV file", type="csv")
+# File upload section
+st.sidebar.markdown("### File Upload Section")
+uploaded_file = st.sidebar.file_uploader("Upload your CSV file", type="csv", help="Upload your custom dataset")
 
-# Render only after a dataset or file is selected
-if dataset_choice != "Select":
-    # Dynamically set the title of the dataset as the header
-    st.title(f"{dataset_choice}")
+# Main content based on dataset or uploaded file
+if dataset_choice != "Select" or uploaded_file is not None:
+    st.title("Disease Prediction Dashboard")
     
-    # Dataset descriptions
-    dataset_info = {
-        "Heart Disease": {
-            "description": "This dataset contains 303 records and 14 attributes related to diagnosing heart disease. The target variable indicates the presence of heart disease (1: disease, 0: no disease).",
-            "source": "https://archive.ics.uci.edu/ml/datasets/Heart+Disease",
-            "attributes": [
-                "age", "sex", "cp (chest pain type)", "trestbps (resting blood pressure)",
-                "chol (serum cholesterol)", "fbs (fasting blood sugar)", "restecg (resting ECG)",
-                "thalach (max heart rate achieved)", "exang (exercise-induced angina)",
-                "oldpeak (ST depression)", "slope (slope of peak exercise ST segment)",
-                "ca (number of vessels colored by fluoroscopy)", "thal (thalassemia)", "target"
-            ]
-        },
-        "Diabetes": {
-            "description": "The diabetes dataset from sklearn consists of 442 records with 10 attributes. It is used for regression but has been modified here for classification by binarizing the target variable.",
-            "source": "https://archive.ics.uci.edu/dataset/34/diabetes",
-            "attributes": list(load_diabetes_data().columns)
-        },
-        "Breast Cancer": {
-            "description": "This dataset contains 569 records and 30 attributes related to diagnosing breast cancer. The target variable indicates whether the cancer is malignant or benign.",
-            "source": "https://scikit-learn.org/stable/modules/generated/sklearn.datasets.load_breast_cancer.html",
-            "attributes": list(load_breast_cancer_data().columns)
-        },
-        "Liver Disorders": {
-            "description": "The liver disorders dataset contains 345 records and 7 attributes related to the diagnosis of liver disorders.",
-            "source": "https://archive.ics.uci.edu/ml/datasets/Liver+Disorders",
-            "attributes": ["mcv", "alkphos", "sgpt", "sgot", "gammagt", "drinks", "selector"]
-        }
-    }
-
-    # Display dataset information
-    st.markdown("### Dataset Information")
-    st.write(dataset_info[dataset_choice]["description"])
-    st.markdown(f"**Source:** [Dataset Link]({dataset_info[dataset_choice]['source']})")
-    st.markdown("**Attributes:**")
-    st.write(dataset_info[dataset_choice]["attributes"])
-
-    # Load the appropriate dataset
-    if dataset_choice == "Heart Disease":
-        data = load_heart_disease_data()
-        X = data.drop("target", axis=1)
-        y = data["target"]
-    elif dataset_choice == "Diabetes":
-        data = load_diabetes_data()
-        X = data.drop("target", axis=1)
-        y = data["target"]
-    elif dataset_choice == "Breast Cancer":
-        data = load_breast_cancer_data()
-        X = data.drop("target", axis=1)
-        y = data["target"]
-    elif dataset_choice == "Liver Disorders":
-        data = load_liver_disorders_data()
-        X = data.drop("selector", axis=1)
-        y = data["selector"]
-
-    # Dataset Overview
-    st.subheader("Dataset Overview")
+    # Handle dataset selection or file upload
+    if dataset_choice != "Select":
+        # Load predefined dataset
+        if dataset_choice == "Heart Disease":
+            data = load_heart_disease_data()
+            target_column = "target"
+        elif dataset_choice == "Diabetes":
+            data = load_diabetes_data()
+            target_column = "target"
+        elif dataset_choice == "Breast Cancer":
+            data = load_breast_cancer_data()
+            target_column = "target"
+        elif dataset_choice == "Liver Disorders":
+            data = load_liver_disorders_data()
+            target_column = "selector"
+        st.subheader(f"Dataset Overview: {dataset_choice}")
+    elif uploaded_file is not None:
+        # Handle uploaded file
+        data = pd.read_csv(uploaded_file)
+        target_column = st.sidebar.selectbox(
+            "Select Target Column:", data.columns, help="Choose the column to use as the target (dependent variable)."
+        )
+        st.subheader("Uploaded Dataset Overview")
+    
+    X = data.drop(target_column, axis=1)
+    y = data[target_column]
+    
+    # Display data overview
     st.write(f"Shape: {data.shape}")
     st.write(data.head())
 
-elif uploaded_file is not None:
-    # Handle uploaded file
-    data = pd.read_csv(uploaded_file)
-    st.subheader("Uploaded Dataset")
-    st.write(data.head())  # Preview of uploaded data
-    X = data.iloc[:, :-1]  # All columns except the last one
-    y = data.iloc[:, -1]   # Last column as the target
-    
-    # Dataset Overview
-    st.subheader("Dataset Overview")
-    st.write(f"Shape: {data.shape}")
-    st.write(data.head())
-
-else:
-    st.title("UCI Disease Prediction Dashboard")
-    st.write("Please select a dataset from the sidebar to begin.")
-
-# Model Selection and Evaluation
-if 'data' in locals():
+    # Model Selection and Evaluation
+    st.sidebar.markdown("### Model Selection")
     model_choice = st.sidebar.selectbox(
         "Choose a model:",
         ["RandomForest", "LogisticRegression", "GradientBoosting"]
     )
-
     if st.button("Train and Evaluate Model"):
         st.subheader("Model Performance")
         accuracy, report_df = train_and_evaluate_model(X, y, model_type=model_choice)
@@ -164,15 +117,16 @@ if 'data' in locals():
         st.write("Classification Report:")
         st.dataframe(report_df)
 
-        # Feature Importance for Tree-based models
+        # Feature Importance for tree-based models
         if model_choice in ["RandomForest", "GradientBoosting"]:
             model = RandomForestClassifier(random_state=42) if model_choice == "RandomForest" else GradientBoostingClassifier(random_state=42)
             model.fit(X, y)
             feature_importances = pd.Series(model.feature_importances_, index=X.columns).sort_values(ascending=False)
             st.subheader("Feature Importance")
             st.bar_chart(feature_importances)
-
+    
     # Visualization Options
+    st.sidebar.markdown("### Visualization Options")
     if st.sidebar.checkbox("Show Pairplot"):
         st.subheader("Pairplot")
         sns.pairplot(data)
@@ -183,3 +137,7 @@ if 'data' in locals():
         plt.figure(figsize=(10, 6))
         sns.heatmap(data.corr(), annot=True, cmap="coolwarm", fmt=".2f")
         st.pyplot()
+
+else:
+    st.title("UCI Disease Prediction Dashboard")
+    st.write("Please select a dataset from the sidebar or upload your CSV file to begin.")
