@@ -98,10 +98,15 @@ dataset_choice = st.sidebar.selectbox(
     ["Select", "Heart Disease", "Diabetes", "Breast Cancer", "Liver Disorders"]
 )
 
-# Checkbox to allow dataset upload
-upload_data = st.sidebar.checkbox("Upload your own dataset")
+# Model Selection and Evaluation
+model_choice = st.sidebar.selectbox(
+    "Choose a model:",
+    ["RandomForest", "LogisticRegression", "GradientBoosting"]
+)
 
 # Handle file upload if checked
+upload_data = st.sidebar.checkbox("Upload your own dataset")
+
 if upload_data:
     uploaded_file = st.sidebar.file_uploader("Choose a CSV file", type="csv")
     if uploaded_file is not None:
@@ -112,7 +117,7 @@ if upload_data:
         X = data.iloc[:, :-1]  # All columns except the last one
         y = data.iloc[:, -1]   # Last column as the target
 
-# Render the selected dataset
+# Handle dataset choice if a predefined dataset is selected
 elif dataset_choice != "Select":
     st.subheader(f"You selected: {dataset_choice}")
     
@@ -146,12 +151,7 @@ elif dataset_choice != "Select":
     st.write(f"Shape: {data.shape}")
     st.write(data.head())
 
-# Model Selection and Evaluation
-model_choice = st.sidebar.selectbox(
-    "Choose a model:",
-    ["RandomForest", "LogisticRegression", "GradientBoosting"]
-)
-
+# Train and evaluate the selected model
 if st.button("Train and Evaluate Model"):
     st.subheader("Model Performance")
     accuracy, report_df = train_and_evaluate_model(X, y, model_type=model_choice)
