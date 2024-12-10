@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.metrics import classification_report, accuracy_score, roc_curve, auc
+from sklearn.metrics import classification_report, accuracy_score
 
 # Load datasets
 @st.cache_data
@@ -22,14 +22,11 @@ def load_heart_disease_data():
 
 @st.cache_data
 def load_diabetes_data():
-    url = "https://archive.ics.uci.edu/ml/machine-learning-databases/diabetes/diabetes.data"
-    columns = [
-        "Pregnancies", "Glucose", "BloodPressure", "SkinThickness", "Insulin", "BMI", 
-        "DiabetesPedigreeFunction", "Age", "Outcome"
-    ]
-    data = pd.read_csv(url, header=None, names=columns)
-    data.replace("?", pd.NA, inplace=True)
-    return data.dropna().astype(float)
+    from sklearn.datasets import load_diabetes
+    diabetes = load_diabetes(as_frame=True)
+    data = diabetes.data
+    data["target"] = (diabetes.target > 140).astype(int)  # Binarize target
+    return data
 
 @st.cache_data
 def load_breast_cancer_data():
@@ -60,17 +57,7 @@ def train_and_evaluate_model(X, y, model_type="RandomForest"):
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
     report = classification_report(y_test, y_pred, output_dict=True)
-    
-    # ROC curve and AUC calculation
-    if len(y.unique()) > 2:
-        # If target is not binary, map it to {0, 1}
-        y_test = y_test.replace(2, 1)
-    
-    y_pred_proba = model.predict_proba(X_test)[:, 1]  # Probabilities for the positive class
-    fpr, tpr, thresholds = roc_curve(y_test, y_pred_proba)
-    roc_auc = auc(fpr, tpr)
-    
-    return accuracy_score(y_test, y_pred), pd.DataFrame(report).transpose(), fpr, tpr, roc_auc
+    return accuracy_score(y_test, y_pred), pd.DataFrame(report).transpose()
 
 # Streamlit App
 st.title("UCI Disease Prediction Dashboard")
@@ -89,12 +76,9 @@ dataset_info = {
         ]
     },
     "Diabetes": {
-        "description": "This dataset contains medical records of patients used for predicting diabetes. The target variable indicates whether the patient has diabetes (1) or not (0).",
-        "source": "https://archive.ics.uci.edu/ml/datasets/diabetes",
-        "attributes": [
-            "Pregnancies", "Glucose", "BloodPressure", "SkinThickness", "Insulin", "BMI", 
-            "DiabetesPedigreeFunction", "Age", "Outcome"
-        ]
+        "description": "The diabetes dataset from sklearn consists of 442 records with 10 attributes. It is used for regression but has been modified here for classification by binarizing the target variable.",
+        "source": "https://scikit-learn.org/stable/modules/generated/sklearn.datasets.load_diabetes.html",
+        "attributes": list(load_diabetes_data().columns)
     },
     "Breast Cancer": {
         "description": "This dataset contains 569 records and 30 attributes related to diagnosing breast cancer. The target variable indicates whether the cancer is malignant or benign.",
@@ -176,7 +160,7 @@ if 'data' in locals():
 
     if st.button("Train and Evaluate Model"):
         st.subheader("Model Performance")
-        accuracy, report_df, fpr, tpr, roc_auc = train_and_evaluate_model(X, y, model_type=model_choice)
+        accuracy, report_df = train_and_evaluate_model(X, y, model_type=model_choice)
         st.write(f"Accuracy: {accuracy:.2f}")
         st.write("Classification Report:")
         st.dataframe(report_df)
@@ -185,25 +169,9 @@ if 'data' in locals():
         if model_choice in ["RandomForest", "GradientBoosting"]:
             model = RandomForestClassifier(random_state=42) if model_choice == "RandomForest" else GradientBoostingClassifier(random_state=42)
             model.fit(X, y)
-            feature_importances = model.feature_importances_
-            st.subheader("Feature Importances")
-            sns.barplot(x=X.columns, y=feature_importances)
-            plt.xticks(rotation=90)
-            st.pyplot()
-
-        # Plot ROC curve
-        st.subheader("ROC Curve")
-        st.write(f"AUC: {roc_auc:.2f}")
-        plt.figure()
-        plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC curve (area = %0.2f)' % roc_auc)
-        plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
-        plt.xlim([0.0, 1.0])
-        plt.ylim([0.0, 1.05])
-        plt.xlabel('False Positive Rate')
-        plt.ylabel('True Positive Rate')
-        plt.title('Receiver Operating Characteristic (ROC)')
-        plt.legend(loc="lower right")
-        st.pyplot()
+            feature_importances = pd.Series(model.feature_importances_, index=X.columns).sort_values(ascending=False)
+            st.subheader("Feature Importance")
+            st.bar_chart(feature_importances)
 
     # Visualization Options
     if st.sidebar.checkbox("Show Pairplot"):
