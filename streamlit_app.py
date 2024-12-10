@@ -92,10 +92,10 @@ dataset_info = {
     }
 }
 
+
 # Create a sidebar for dataset selection
 dataset_choice = st.sidebar.selectbox(
-    "Choose a dataset to explore:",
-    ["Select", "Heart Disease", "Diabetes", "Breast Cancer", "Liver Disorders"]
+    ["Dataset", "Heart Disease", "Diabetes", "Breast Cancer", "Liver Disorders"]
 )
 
 # File upload option (separate from the dataset selection)
