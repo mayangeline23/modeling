@@ -10,41 +10,42 @@ from sklearn.metrics import classification_report, accuracy_score
 
 # Load datasets
 @st.cache_data
-def load_dataset(dataset_name):
-    """Loads the specified dataset."""
-    if dataset_name == "Heart Disease":
-        url = "https://archive.ics.uci.edu/ml/machine-learning-databases/heart-disease/processed.cleveland.data"
-        columns = [
-            "age", "sex", "cp", "trestbps", "chol", "fbs", "restecg", "thalach",
-            "exang", "oldpeak", "slope", "ca", "thal", "target"
-        ]
-        data = pd.read_csv(url, header=None, names=columns)
-        data.replace("?", pd.NA, inplace=True)
-        return data.dropna().astype(float)
-    elif dataset_name == "Diabetes":
-        from sklearn.datasets import load_diabetes
-        diabetes = load_diabetes(as_frame=True)
-        data = diabetes.data
-        data["target"] = (diabetes.target > 140).astype(int)
-        return data
-    elif dataset_name == "Breast Cancer":
-        from sklearn.datasets import load_breast_cancer
-        cancer = load_breast_cancer(as_frame=True)
-        data = cancer.data
-        data["target"] = cancer.target
-        return data
-    elif dataset_name == "Liver Disorders":
-        url = "https://archive.ics.uci.edu/ml/machine-learning-databases/liver-disorders/bupa.data"
-        columns = ["mcv", "alkphos", "sgpt", "sgot", "gammagt", "drinks", "selector"]
-        data = pd.read_csv(url, header=None, names=columns)
-        return data
-    else:
-        raise ValueError(f"Invalid dataset name: {dataset_name}")
+def load_heart_disease_data():
+    url = "https://archive.ics.uci.edu/ml/machine-learning-databases/heart-disease/processed.cleveland.data"
+    columns = [
+        "age", "sex", "cp", "trestbps", "chol", "fbs", "restecg", "thalach", 
+        "exang", "oldpeak", "slope", "ca", "thal", "target"
+    ]
+    data = pd.read_csv(url, header=None, names=columns)
+    data.replace("?", pd.NA, inplace=True)
+    return data.dropna().astype(float)
+
+@st.cache_data
+def load_diabetes_data():
+    from sklearn.datasets import load_diabetes
+    diabetes = load_diabetes(as_frame=True)
+    data = diabetes.data
+    data["target"] = (diabetes.target > 140).astype(int)  # Binarize target
+    return data
+
+@st.cache_data
+def load_breast_cancer_data():
+    from sklearn.datasets import load_breast_cancer
+    cancer = load_breast_cancer(as_frame=True)
+    data = cancer.data
+    data["target"] = cancer.target
+    return data
+
+@st.cache_data
+def load_liver_disorders_data():
+    url = "https://archive.ics.uci.edu/ml/machine-learning-databases/liver-disorders/bupa.data"
+    columns = ["mcv", "alkphos", "sgpt", "sgot", "gammagt", "drinks", "selector"]
+    data = pd.read_csv(url, header=None, names=columns)
+    return data
 
 # Unified function for training and evaluation
-def train_and_evaluate_model(features, target, model_type="RandomForest"):
-    """Trains and evaluates the specified model."""
-    X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.2, random_state=42)
+def train_and_evaluate_model(X, y, model_type="RandomForest"):
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
     if model_type == "RandomForest":
         model = RandomForestClassifier(random_state=42)
@@ -52,8 +53,6 @@ def train_and_evaluate_model(features, target, model_type="RandomForest"):
         model = LogisticRegression(max_iter=1000, random_state=42)
     elif model_type == "GradientBoosting":
         model = GradientBoostingClassifier(random_state=42)
-    else:
-        raise ValueError(f"Invalid model type: {model_type}")
     
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
@@ -61,14 +60,12 @@ def train_and_evaluate_model(features, target, model_type="RandomForest"):
     return accuracy_score(y_test, y_pred), pd.DataFrame(report).transpose()
 
 # Streamlit App
-st.title("UCI Disease Prediction Dashboard")
-
 dataset_choice = st.sidebar.selectbox(
     "Choose a dataset to explore:",
     ["Select", "Heart Disease", "Diabetes", "Breast Cancer", "Liver Disorders"]
 )
 
-# File upload section
+# File upload section (separate from the dataset select box)
 uploaded_file = st.sidebar.file_uploader("Upload your CSV file", type="csv")
 
 # Render only after a dataset or file is selected
@@ -114,9 +111,22 @@ if dataset_choice != "Select":
     st.write(dataset_info[dataset_choice]["attributes"])
 
     # Load the appropriate dataset
-    data = load_dataset(dataset_choice)
-    features = data.drop("target", axis=1) if "target" in data.columns else data.drop("selector", axis=1)
-    target = data["target"] if "target" in data.columns else data["selector"]
+    if dataset_choice == "Heart Disease":
+        data = load_heart_disease_data()
+        X = data.drop("target", axis=1)
+        y = data["target"]
+    elif dataset_choice == "Diabetes":
+        data = load_diabetes_data()
+        X = data.drop("target", axis=1)
+        y = data["target"]
+    elif dataset_choice == "Breast Cancer":
+        data = load_breast_cancer_data()
+        X = data.drop("target", axis=1)
+        y = data["target"]
+    elif dataset_choice == "Liver Disorders":
+        data = load_liver_disorders_data()
+        X = data.drop("selector", axis=1)
+        y = data["selector"]
 
     # Dataset Overview
     st.subheader("Dataset Overview")
@@ -128,8 +138,8 @@ elif uploaded_file is not None:
     data = pd.read_csv(uploaded_file)
     st.subheader("Uploaded Dataset")
     st.write(data.head())  # Preview of uploaded data
-    features = data.iloc[:, :-1]  # All columns except the last one
-    target = data.iloc[:, -1]   # Last column as the target
+    X = data.iloc[:, :-1]  # All columns except the last one
+    y = data.iloc[:, -1]   # Last column as the target
     
     # Dataset Overview
     st.subheader("Dataset Overview")
@@ -137,6 +147,7 @@ elif uploaded_file is not None:
     st.write(data.head())
 
 else:
+    st.title("UCI Disease Prediction Dashboard")
     st.write("Please select a dataset from the sidebar to begin.")
 
 # Model Selection and Evaluation
@@ -148,7 +159,7 @@ if 'data' in locals():
 
     if st.button("Train and Evaluate Model"):
         st.subheader("Model Performance")
-        accuracy, report_df = train_and_evaluate_model(features, target, model_type=model_choice)
+        accuracy, report_df = train_and_evaluate_model(X, y, model_type=model_choice)
         st.write(f"Accuracy: {accuracy:.2f}")
         st.write("Classification Report:")
         st.dataframe(report_df)
@@ -156,16 +167,8 @@ if 'data' in locals():
         # Feature Importance for Tree-based models
         if model_choice in ["RandomForest", "GradientBoosting"]:
             model = RandomForestClassifier(random_state=42) if model_choice == "RandomForest" else GradientBoostingClassifier(random_state=42)
-            model.fit(features, target)
-            feature_importances = pd.Series(model.feature_importances_, index=features.columns).sort_values(ascending=False)
-            st.subheader("Feature Importance")
-            st.bar_chart(feature_importances)
-
-        # Feature Importance for Linear Models
-        if model_choice == "LogisticRegression":
-            model = LogisticRegression(max_iter=1000, random_state=42)
-            model.fit(features, target)
-            feature_importances = pd.Series(model.coef_[0], index=features.columns).sort_values(ascending=False)
+            model.fit(X, y)
+            feature_importances = pd.Series(model.feature_importances_, index=X.columns).sort_values(ascending=False)
             st.subheader("Feature Importance")
             st.bar_chart(feature_importances)
 
