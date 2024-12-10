@@ -1,4 +1,3 @@
-
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -93,14 +92,28 @@ dataset_info = {
     }
 }
 
-# Create a sidebar for dataset selection
+# Sidebar: Allow dataset selection or file upload
 dataset_choice = st.sidebar.selectbox(
     "Choose a dataset to explore:",
     ["Select", "Heart Disease", "Diabetes", "Breast Cancer", "Liver Disorders"]
 )
 
-# Render only after a dataset is selected
-if dataset_choice != "Select":
+# Checkbox to allow dataset upload
+upload_data = st.sidebar.checkbox("Upload your own dataset")
+
+# Handle file upload if checked
+if upload_data:
+    uploaded_file = st.sidebar.file_uploader("Choose a CSV file", type="csv")
+    if uploaded_file is not None:
+        data = pd.read_csv(uploaded_file)
+        st.subheader("Uploaded Dataset")
+        st.write(data.head())  # Display a preview of the uploaded dataset
+        # Set X and y based on available columns (assumes the last column is the target)
+        X = data.iloc[:, :-1]  # All columns except the last one
+        y = data.iloc[:, -1]   # Last column as the target
+
+# Render the selected dataset
+elif dataset_choice != "Select":
     st.subheader(f"You selected: {dataset_choice}")
     
     # Display dataset information
@@ -133,28 +146,29 @@ if dataset_choice != "Select":
     st.write(f"Shape: {data.shape}")
     st.write(data.head())
 
-    # Model Selection and Evaluation
-    model_choice = st.sidebar.selectbox(
-        "Choose a model:",
-        ["RandomForest", "LogisticRegression", "GradientBoosting"]
-    )
+# Model Selection and Evaluation
+model_choice = st.sidebar.selectbox(
+    "Choose a model:",
+    ["RandomForest", "LogisticRegression", "GradientBoosting"]
+)
 
-    if st.button("Train and Evaluate Model"):
-        st.subheader("Model Performance")
-        accuracy, report_df = train_and_evaluate_model(X, y, model_type=model_choice)
-        st.write(f"Accuracy: {accuracy:.2f}")
-        st.write("Classification Report:")
-        st.dataframe(report_df)
+if st.button("Train and Evaluate Model"):
+    st.subheader("Model Performance")
+    accuracy, report_df = train_and_evaluate_model(X, y, model_type=model_choice)
+    st.write(f"Accuracy: {accuracy:.2f}")
+    st.write("Classification Report:")
+    st.dataframe(report_df)
 
-        # Feature Importance for Tree-based models
-        if model_choice in ["RandomForest", "GradientBoosting"]:
-            model = RandomForestClassifier(random_state=42) if model_choice == "RandomForest" else GradientBoostingClassifier(random_state=42)
-            model.fit(X, y)
-            feature_importances = pd.Series(model.feature_importances_, index=X.columns).sort_values(ascending=False)
-            st.subheader("Feature Importance")
-            st.bar_chart(feature_importances)
+    # Feature Importance for Tree-based models
+    if model_choice in ["RandomForest", "GradientBoosting"]:
+        model = RandomForestClassifier(random_state=42) if model_choice == "RandomForest" else GradientBoostingClassifier(random_state=42)
+        model.fit(X, y)
+        feature_importances = pd.Series(model.feature_importances_, index=X.columns).sort_values(ascending=False)
+        st.subheader("Feature Importance")
+        st.bar_chart(feature_importances)
 
-    # Visualization Options
+# Visualization Options
+if 'data' in locals():
     if st.sidebar.checkbox("Show Pairplot"):
         st.subheader("Pairplot")
         sns.pairplot(data)
@@ -166,4 +180,4 @@ if dataset_choice != "Select":
         sns.heatmap(data.corr(), annot=True, cmap="coolwarm", fmt=".2f")
         st.pyplot()
 else:
-    st.write("Please select a dataset from the sidebar to begin.") 
+    st.write("Please select or upload a dataset to begin.")
