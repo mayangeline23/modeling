@@ -60,39 +60,6 @@ def train_and_evaluate_model(X, y, model_type="RandomForest"):
     return accuracy_score(y_test, y_pred), pd.DataFrame(report).transpose()
 
 # Streamlit App
-st.title("UCI Disease Prediction Dashboard")
-
-# Dataset descriptions
-dataset_info = {
-    "Heart Disease": {
-        "description": "This dataset contains 303 records and 14 attributes related to diagnosing heart disease. The target variable indicates the presence of heart disease (1: disease, 0: no disease).",
-        "source": "https://archive.ics.uci.edu/ml/datasets/Heart+Disease",
-        "attributes": [
-            "age", "sex", "cp (chest pain type)", "trestbps (resting blood pressure)",
-            "chol (serum cholesterol)", "fbs (fasting blood sugar)", "restecg (resting ECG)",
-            "thalach (max heart rate achieved)", "exang (exercise-induced angina)",
-            "oldpeak (ST depression)", "slope (slope of peak exercise ST segment)",
-            "ca (number of vessels colored by fluoroscopy)", "thal (thalassemia)", "target"
-        ]
-    },
-    "Diabetes": {
-        "description": "The diabetes dataset from sklearn consists of 442 records with 10 attributes. It is used for regression but has been modified here for classification by binarizing the target variable.",
-        "source": "https://scikit-learn.org/stable/modules/generated/sklearn.datasets.load_diabetes.html",
-        "attributes": list(load_diabetes_data().columns)
-    },
-    "Breast Cancer": {
-        "description": "This dataset contains 569 records and 30 attributes related to diagnosing breast cancer. The target variable indicates whether the cancer is malignant or benign.",
-        "source": "https://scikit-learn.org/stable/modules/generated/sklearn.datasets.load_breast_cancer.html",
-        "attributes": list(load_breast_cancer_data().columns)
-    },
-    "Liver Disorders": {
-        "description": "The liver disorders dataset contains 345 records and 7 attributes related to the diagnosis of liver disorders.",
-        "source": "https://archive.ics.uci.edu/ml/datasets/Liver+Disorders",
-        "attributes": ["mcv", "alkphos", "sgpt", "sgot", "gammagt", "drinks", "selector"]
-    }
-}
-
-# Create a sidebar for dataset selection
 dataset_choice = st.sidebar.selectbox(
     "Choose a dataset to explore:",
     ["Select", "Heart Disease", "Diabetes", "Breast Cancer", "Liver Disorders"]
@@ -103,8 +70,40 @@ uploaded_file = st.sidebar.file_uploader("Your upload your CSV file", type="csv"
 
 # Render only after a dataset or file is selected
 if dataset_choice != "Select":
+    # Remove the title if dataset is selected
+    st.empty()
     st.subheader(f"You selected: {dataset_choice}")
     
+    # Dataset descriptions
+    dataset_info = {
+        "Heart Disease": {
+            "description": "This dataset contains 303 records and 14 attributes related to diagnosing heart disease. The target variable indicates the presence of heart disease (1: disease, 0: no disease).",
+            "source": "https://archive.ics.uci.edu/ml/datasets/Heart+Disease",
+            "attributes": [
+                "age", "sex", "cp (chest pain type)", "trestbps (resting blood pressure)",
+                "chol (serum cholesterol)", "fbs (fasting blood sugar)", "restecg (resting ECG)",
+                "thalach (max heart rate achieved)", "exang (exercise-induced angina)",
+                "oldpeak (ST depression)", "slope (slope of peak exercise ST segment)",
+                "ca (number of vessels colored by fluoroscopy)", "thal (thalassemia)", "target"
+            ]
+        },
+        "Diabetes": {
+            "description": "The diabetes dataset from sklearn consists of 442 records with 10 attributes. It is used for regression but has been modified here for classification by binarizing the target variable.",
+            "source": "https://scikit-learn.org/stable/modules/generated/sklearn.datasets.load_diabetes.html",
+            "attributes": list(load_diabetes_data().columns)
+        },
+        "Breast Cancer": {
+            "description": "This dataset contains 569 records and 30 attributes related to diagnosing breast cancer. The target variable indicates whether the cancer is malignant or benign.",
+            "source": "https://scikit-learn.org/stable/modules/generated/sklearn.datasets.load_breast_cancer.html",
+            "attributes": list(load_breast_cancer_data().columns)
+        },
+        "Liver Disorders": {
+            "description": "The liver disorders dataset contains 345 records and 7 attributes related to the diagnosis of liver disorders.",
+            "source": "https://archive.ics.uci.edu/ml/datasets/Liver+Disorders",
+            "attributes": ["mcv", "alkphos", "sgpt", "sgot", "gammagt", "drinks", "selector"]
+        }
+    }
+
     # Display dataset information
     st.markdown("### Dataset Information")
     st.write(dataset_info[dataset_choice]["description"])
@@ -149,6 +148,7 @@ elif uploaded_file is not None:
     st.write(data.head())
 
 else:
+    st.title("UCI Disease Prediction Dashboard")
     st.write("Please select a dataset from the sidebar to begin.")
 
 # Model Selection and Evaluation
