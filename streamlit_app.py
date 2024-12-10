@@ -98,9 +98,6 @@ dataset_choice = st.sidebar.selectbox(
     ["Select", "Heart Disease", "Diabetes", "Breast Cancer", "Liver Disorders"]
 )
 
-# File upload option (separate from the dataset selection)
-uploaded_file = st.sidebar.file_uploader("Upload your CSV file", type="csv")
-
 # Render only after a dataset or file is selected
 if dataset_choice != "Select":
     st.subheader(f"You selected: {dataset_choice}")
@@ -172,6 +169,9 @@ if 'data' in locals():
             feature_importances = pd.Series(model.feature_importances_, index=X.columns).sort_values(ascending=False)
             st.subheader("Feature Importance")
             st.bar_chart(feature_importances)
+
+# File upload section (separate from the dataset select box)
+uploaded_file = st.sidebar.file_uploader("Or upload your CSV file", type="csv")
 
     # Visualization Options
     if st.sidebar.checkbox("Show Pairplot"):
