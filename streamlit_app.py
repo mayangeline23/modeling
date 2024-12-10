@@ -92,22 +92,23 @@ dataset_info = {
     }
 }
 
-# Sidebar: Allow dataset selection or file upload
+# Sidebar: Allow dataset selection
 dataset_choice = st.sidebar.selectbox(
-    "Choose a dataset or upload your own:",
-    ["Select", "Heart Disease", "Diabetes", "Breast Cancer", "Liver Disorders", "Upload File"]
+    "Choose a dataset:",
+    ["Select", "Heart Disease", "Diabetes", "Breast Cancer", "Liver Disorders"]
 )
 
-# Handle file upload if "Upload File" is selected
-if dataset_choice == "Upload File":
-    uploaded_file = st.sidebar.file_uploader("Upload your CSV file", type="csv")
-    if uploaded_file is not None:
-        data = pd.read_csv(uploaded_file)
-        st.subheader("Uploaded Dataset")
-        st.write(data.head())  # Display a preview of the uploaded dataset
-        # Set X and y based on available columns (assumes the last column is the target)
-        X = data.iloc[:, :-1]  # All columns except the last one
-        y = data.iloc[:, -1]   # Last column as the target
+# Sidebar: Allow file upload
+uploaded_file = st.sidebar.file_uploader("Or upload your own CSV file", type="csv")
+
+# Handle file upload if a file is uploaded
+if uploaded_file is not None:
+    data = pd.read_csv(uploaded_file)
+    st.subheader("Uploaded Dataset")
+    st.write(data.head())  # Display a preview of the uploaded dataset
+    # Set X and y based on available columns (assumes the last column is the target)
+    X = data.iloc[:, :-1]  # All columns except the last one
+    y = data.iloc[:, -1]   # Last column as the target
 
 # Handle predefined dataset choice
 elif dataset_choice != "Select":
