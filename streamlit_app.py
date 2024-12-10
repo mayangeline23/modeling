@@ -66,7 +66,7 @@ dataset_choice = st.sidebar.selectbox(
 )
 
 # File upload section (separate from the dataset select box)
-uploaded_file = st.sidebar.file_uploader("Your upload your CSV file", type="csv")
+uploaded_file = st.sidebar.file_uploader("Upload your CSV file", type="csv")
 
 # Render only after a dataset or file is selected
 if dataset_choice != "Select":
