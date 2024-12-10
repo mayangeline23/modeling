@@ -70,8 +70,8 @@ uploaded_file = st.sidebar.file_uploader("Your upload your CSV file", type="csv"
 
 # Render only after a dataset or file is selected
 if dataset_choice != "Select":
-    # Remove the title if dataset is selected
-    st.empty()
+    # Dynamically set the title of the dataset as the header
+    st.title(f"{dataset_choice} Dataset Analysis")
     
     # Dataset descriptions
     dataset_info = {
