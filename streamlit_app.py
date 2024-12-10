@@ -173,6 +173,12 @@ if 'data' in locals():
             st.subheader("Feature Importance")
             st.bar_chart(feature_importances)
 
+    # Show Pairplot with regression lines (for numerical variables)
+      if st.sidebar.checkbox("Show Pairplot with Regression Lines"):
+         st.subheader("Pairplot with Regression Lines")
+         sns.pairplot(data, kind="reg")
+         st.pyplot()
+
     # Visualization Options
     if st.sidebar.checkbox("Show Pairplot"):
         st.subheader("Pairplot")
