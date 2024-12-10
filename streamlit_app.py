@@ -94,13 +94,25 @@ dataset_info = {
 
 # Create a sidebar for dataset selection
 dataset_choice = st.sidebar.selectbox(
-    ["Dataset", "Heart Disease", "Diabetes", "Breast Cancer", "Liver Disorders"]
+    "Choose a dataset",
+    ["Heart Disease", "Diabetes", "Breast Cancer", "Liver Disorders", "Upload Your Dataset"]
 )
 
+# File upload functionality
+uploaded_file = st.sidebar.file_uploader("Upload CSV File", type=["csv"])
+
+# Load and process uploaded dataset
+if uploaded_file is not None:
+    uploaded_data = pd.read_csv(uploaded_file)
+    dataset_choice = "Uploaded Dataset"
+    st.subheader(f"You uploaded: {uploaded_file.name}")
+    st.write(uploaded_data.head())
+    X = uploaded_data.dropna(axis=1, how='any')  # Drop columns with missing values
+    y = X.pop(X.columns[-1])  # Assume the last column is the target
+
 # Render only after a dataset is selected
-if dataset_choice != "Dataset":
+if dataset_choice != "Upload Your Dataset":
     st.subheader(f"You selected: {dataset_choice}")
-    
     # Display dataset information
     st.markdown("### Dataset Information")
     st.write(dataset_info[dataset_choice]["description"])
@@ -125,11 +137,11 @@ if dataset_choice != "Dataset":
         data = load_liver_disorders_data()
         X = data.drop("selector", axis=1)
         y = data["selector"]
-
+    
     # Dataset Overview
     st.subheader("Dataset Overview")
-    st.write(f"Shape: {data.shape}")
-    st.write(data.head())
+    st.write(f"Shape: {X.shape}")
+    st.write(X.head())
 
     # Model Selection and Evaluation
     model_choice = st.sidebar.selectbox(
@@ -155,13 +167,13 @@ if dataset_choice != "Dataset":
     # Visualization Options
     if st.sidebar.checkbox("Show Pairplot"):
         st.subheader("Pairplot")
-        sns.pairplot(data)
+        sns.pairplot(X)
         st.pyplot()
 
     if st.sidebar.checkbox("Show Correlation Heatmap"):
         st.subheader("Correlation Heatmap")
         plt.figure(figsize=(10, 6))
-        sns.heatmap(data.corr(), annot=True, cmap="coolwarm", fmt=".2f")
+        sns.heatmap(X.corr(), annot=True, cmap="coolwarm", fmt=".2f")
         st.pyplot()
 else:
     st.write("Please select a dataset from the sidebar to begin.")
