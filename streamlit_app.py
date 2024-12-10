@@ -94,21 +94,13 @@ dataset_info = {
 
 # Sidebar: Allow dataset selection or file upload
 dataset_choice = st.sidebar.selectbox(
-    "Choose a dataset to explore:",
-    ["Select", "Heart Disease", "Diabetes", "Breast Cancer", "Liver Disorders"]
+    "Choose a dataset or upload your own:",
+    ["Select", "Heart Disease", "Diabetes", "Breast Cancer", "Liver Disorders", "Upload File"]
 )
 
-# Model Selection and Evaluation
-model_choice = st.sidebar.selectbox(
-    "Choose a model:",
-    ["RandomForest", "LogisticRegression", "GradientBoosting"]
-)
-
-# Handle file upload if checked
-upload_data = st.sidebar.checkbox("Upload your own dataset")
-
-if upload_data:
-    uploaded_file = st.sidebar.file_uploader("Choose a CSV file", type="csv")
+# Handle file upload if "Upload File" is selected
+if dataset_choice == "Upload File":
+    uploaded_file = st.sidebar.file_uploader("Upload your CSV file", type="csv")
     if uploaded_file is not None:
         data = pd.read_csv(uploaded_file)
         st.subheader("Uploaded Dataset")
@@ -117,7 +109,7 @@ if upload_data:
         X = data.iloc[:, :-1]  # All columns except the last one
         y = data.iloc[:, -1]   # Last column as the target
 
-# Handle dataset choice if a predefined dataset is selected
+# Handle predefined dataset choice
 elif dataset_choice != "Select":
     st.subheader(f"You selected: {dataset_choice}")
     
