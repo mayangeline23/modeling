@@ -43,6 +43,24 @@ def load_liver_disorders_data():
     data = pd.read_csv(url, header=None, names=columns)
     return data
 
+@st.cache_data
+def load_parkinsons_data():
+    url = "https://archive.ics.uci.edu/ml/machine-learning-databases/parkinsons/parkinsons.data"
+    data = pd.read_csv(url)
+    return data
+
+@st.cache_data
+def load_hepatitis_data():
+    url = "https://archive.ics.uci.edu/ml/machine-learning-databases/hepatitis/hepatitis.data"
+    columns = [
+        "class", "age", "sex", "steroid", "antivirals", "fatigue", "malaise", 
+        "anorexia", "liver_big", "liver_firm", "spleen_palpable", "spiders", 
+        "ascites", "varices", "bilirubin", "alk_phosphate", "sgot", "albumin", 
+        "protime", "histology"
+    ]
+    data = pd.read_csv(url, header=None, names=columns)
+    return data
+
 # Unified function for training and evaluation
 def train_and_evaluate_model(X, y, model_type="RandomForest"):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -89,19 +107,34 @@ dataset_info = {
         "description": "The liver disorders dataset contains 345 records and 7 attributes related to the diagnosis of liver disorders.",
         "source": "https://archive.ics.uci.edu/ml/datasets/Liver+Disorders",
         "attributes": ["mcv", "alkphos", "sgpt", "sgot", "gammagt", "drinks", "selector"]
+    },
+    "Parkinson's Disease": {
+        "description": "Classifies healthy individuals and those with Parkinson's. Attributes include vocal features like jitter and shimmer.",
+        "source": "https://archive.ics.uci.edu/ml/machine-learning-databases/parkinsons/",
+        "attributes": ["name", "MDVP:Fo(DD)", "MDVP:Fhi(DD)", "MDVP:Fho(DD)", "MDVP:Flo(DD)", "MDVP:Jitter(%)", "MDVP:Jitter(Abs)", 
+                       "MDVP:RAP", "MDVP:PPQ", "MDVP:Shimmer", "MDVP:Shimmer(dB)", "Shimmer:APQ3", "Shimmer:APQ5", "MDVP:APQ", 
+                       "HNR", "RPDE", "DFA", "spread1", "spread2", "D2", "PPE", "class"]
+    },
+    "Hepatitis": {
+        "description": "Predicts mortality from hepatitis. Attributes include age, bilirubin levels, and histology.",
+        "source": "https://archive.ics.uci.edu/ml/machine-learning-databases/hepatitis/",
+        "attributes": ["class", "age", "sex", "steroid", "antivirals", "fatigue", "malaise", 
+                       "anorexia", "liver_big", "liver_firm", "spleen_palpable", "spiders", 
+                       "ascites", "varices", "bilirubin", "alk_phosphate", "sgot", "albumin", 
+                       "protime", "histology"]
     }
 }
 
 # Create a sidebar for dataset selection
 dataset_choice = st.sidebar.selectbox(
     "Choose a dataset to explore:",
-    ["Select", "Heart Disease", "Diabetes", "Breast Cancer", "Liver Disorders"]
+    ["Select", "Heart Disease", "Diabetes", "Breast Cancer", "Liver Disorders", "Parkinson's Disease", "Hepatitis"]
 )
 
 # File upload section (separate from the dataset select box)
 uploaded_file = st.sidebar.file_uploader("Or upload your CSV file", type="csv")
 
-# Render only after a dataset or file is selected
+# If 'Dataset' is selected, show dataset information
 if dataset_choice != "Select":
     st.subheader(f"You selected: {dataset_choice}")
     
@@ -112,7 +145,7 @@ if dataset_choice != "Select":
     st.markdown("**Attributes:**")
     st.write(dataset_info[dataset_choice]["attributes"])
 
-    # Load the appropriate dataset
+    # Load the appropriate dataset based on choice
     if dataset_choice == "Heart Disease":
         data = load_heart_disease_data()
         X = data.drop("target", axis=1)
@@ -129,30 +162,21 @@ if dataset_choice != "Select":
         data = load_liver_disorders_data()
         X = data.drop("selector", axis=1)
         y = data["selector"]
+    elif dataset_choice == "Parkinson's Disease":
+        data = load_parkinsons_data()
+        X = data.drop("class", axis=1)
+        y = data["class"]
+    elif dataset_choice == "Hepatitis":
+        data = load_hepatitis_data()
+        X = data.drop("class", axis=1)
+        y = data["class"]
 
     # Dataset Overview
     st.subheader("Dataset Overview")
     st.write(f"Shape: {data.shape}")
     st.write(data.head())
 
-elif uploaded_file is not None:
-    # Handle uploaded file
-    data = pd.read_csv(uploaded_file)
-    st.subheader("Uploaded Dataset")
-    st.write(data.head())  # Preview of uploaded data
-    X = data.iloc[:, :-1]  # All columns except the last one
-    y = data.iloc[:, -1]   # Last column as the target
-    
-    # Dataset Overview
-    st.subheader("Dataset Overview")
-    st.write(f"Shape: {data.shape}")
-    st.write(data.head())
-
-else:
-    st.write("Please select a dataset from the sidebar to begin.")
-
-# Model Selection and Evaluation
-if 'data' in locals():
+    # Model Selection and Evaluation
     model_choice = st.sidebar.selectbox(
         "Choose a model:",
         ["RandomForest", "LogisticRegression", "GradientBoosting"]
@@ -173,14 +197,33 @@ if 'data' in locals():
             st.subheader("Feature Importance")
             st.bar_chart(feature_importances)
 
-    # Visualization Options
-    if st.sidebar.checkbox("Show Pairplot"):
-        st.subheader("Pairplot")
-        sns.pairplot(data)
-        st.pyplot()
+# Handle the case where no option is selected
+elif uploaded_file is not None:
+    data = pd.read_csv(uploaded_file)
 
-    if st.sidebar.checkbox("Show Correlation Heatmap"):
-        st.subheader("Correlation Heatmap")
-        plt.figure(figsize=(10, 6))
-        sns.heatmap(data.corr(), annot=True, cmap="coolwarm", fmt=".2f")
-        st.pyplot()
+    st.subheader("Uploaded Dataset")
+    st.write(data.head())  # Display the first few rows of the uploaded file
+
+    # Display basic info about the dataset
+    st.write(f"Shape of the dataset: {data.shape}")
+    st.write(f"Columns in the dataset: {data.columns}")
+
+    # Process the uploaded dataset
+    X = data.drop("target", axis=1, errors='ignore')  # Ensure that 'target' column is handled
+    y = data.get("target", None)  # Check for the 'target' column
+
+    if y is not None:
+        model_choice = st.sidebar.selectbox(
+            "Choose a model:",
+            ["RandomForest", "LogisticRegression", "GradientBoosting"]
+        )
+
+        if st.button("Train and Evaluate Model"):
+            st.subheader("Model Performance")
+            accuracy, report_df = train_and_evaluate_model(X, y, model_type=model_choice)
+            st.write(f"Accuracy: {accuracy:.2f}")
+            st.write("Classification Report:")
+            st.dataframe(report_df)
+
+else:
+    st.write("Please select a dataset or upload a file to begin.")
