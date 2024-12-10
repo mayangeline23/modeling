@@ -148,7 +148,7 @@ elif uploaded_file is not None:
 
 else:
     st.title("UCI Disease Prediction Dashboard")
-    st.write("Please select a dataset from the sidebar to begin or upload your CSV file.")
+    st.write("Please select a dataset from the sidebar to begin.")
 
 # Model Selection and Evaluation
 if 'data' in locals():
