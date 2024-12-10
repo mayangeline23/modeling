@@ -6,7 +6,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.metrics import classification_report, accuracy_score
+from sklearn.metrics import classification_report, accuracy_score, roc_curve, auc
+from sklearn.preprocessing import LabelEncoder
 
 # Load datasets
 @st.cache_data
@@ -57,7 +58,7 @@ def train_and_evaluate_model(X, y, model_type="RandomForest"):
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
     report = classification_report(y_test, y_pred, output_dict=True)
-    return accuracy_score(y_test, y_pred), pd.DataFrame(report).transpose()
+    return accuracy_score(y_test, y_pred), pd.DataFrame(report).transpose(), model, X_test, y_test
 
 # Streamlit App
 st.title("UCI Disease Prediction Dashboard")
@@ -160,24 +161,30 @@ if 'data' in locals():
 
     if st.button("Train and Evaluate Model"):
         st.subheader("Model Performance")
-        accuracy, report_df = train_and_evaluate_model(X, y, model_type=model_choice)
+        accuracy, report_df, model, X_test, y_test = train_and_evaluate_model(X, y, model_type=model_choice)
         st.write(f"Accuracy: {accuracy:.2f}")
         st.write("Classification Report:")
         st.dataframe(report_df)
 
         # Feature Importance for Tree-based models
         if model_choice in ["RandomForest", "GradientBoosting"]:
-            model = RandomForestClassifier(random_state=42) if model_choice == "RandomForest" else GradientBoostingClassifier(random_state=42)
-            model.fit(X, y)
             feature_importances = pd.Series(model.feature_importances_, index=X.columns).sort_values(ascending=False)
             st.subheader("Feature Importance")
             st.bar_chart(feature_importances)
 
-    # Show Pairplot with regression lines (for numerical variables)
-      if st.sidebar.checkbox("Show Pairplot with Regression Lines"):
-         st.subheader("Pairplot with Regression Lines")
-         sns.pairplot(data, kind="reg")
-         st.pyplot()
+        # Plot ROC curve
+        fpr, tpr, thresholds = roc_curve(y_test, model.predict_proba(X_test)[:, 1])
+        roc_auc = auc(fpr, tpr)
+        
+        st.subheader("ROC Curve")
+        plt.figure(figsize=(8, 6))
+        plt.plot(fpr, tpr, color='blue', label=f'ROC curve (area = {roc_auc:.2f})')
+        plt.plot([0, 1], [0, 1], color='gray', linestyle='--')
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+        plt.title('Receiver Operating Characteristic (ROC) Curve')
+        plt.legend(loc='lower right')
+        st.pyplot()
 
     # Visualization Options
     if st.sidebar.checkbox("Show Pairplot"):
