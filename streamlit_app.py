@@ -153,6 +153,16 @@ if dataset_choice != "Select":
             feature_importances = pd.Series(model.feature_importances_, index=X.columns).sort_values(ascending=False)
             st.subheader("Feature Importance")
             st.bar_chart(feature_importances)
+            
+# File uploader for custom dataset
+uploaded_file = st.file_uploader("Upload a dataset (CSV format):", type=["csv"])
+
+if uploaded_file:
+    # Load and display the uploaded dataset
+    st.subheader("Uploaded Dataset Overview")
+    data = pd.read_csv(uploaded_file)
+    st.write(f"Shape: {data.shape}")
+    st.write(data.head())
 
     # Visualization Options
     if st.sidebar.checkbox("Show Pairplot"):
