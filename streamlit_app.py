@@ -94,7 +94,6 @@ dataset_info = {
 
 # Create a sidebar for dataset selection
 dataset_choice = st.sidebar.selectbox(
-    "Dataset",
     ["Dataset", "Heart Disease", "Diabetes", "Breast Cancer", "Liver Disorders"]
 )
 
