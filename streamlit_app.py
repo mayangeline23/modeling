@@ -147,7 +147,7 @@ elif uploaded_file is not None:
     st.write(data.head())
 
 else:
-    st.title("UCI Disease Prediction Dashboard")
+    st.title("Health Disease Prediction")
     st.write("Please select a dataset from the sidebar to begin.")
 
 # Model Selection and Evaluation
