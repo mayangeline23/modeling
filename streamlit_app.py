@@ -77,7 +77,7 @@ if dataset_choice != "Select":
     dataset_info = {
         "Heart Disease": {
             "description": "This dataset contains 303 records and 14 attributes related to diagnosing heart disease. The target variable indicates the presence of heart disease (1: disease, 0: no disease).",
-            "source": "https://archive.ics.uci.edu/ml/datasets/Heart+Disease",
+            "source": "https://archive.ics.uci.edu/dataset/45/heart+disease",
             "attributes": [
                 "age", "sex", "cp (chest pain type)", "trestbps (resting blood pressure)",
                 "chol (serum cholesterol)", "fbs (fasting blood sugar)", "restecg (resting ECG)",
